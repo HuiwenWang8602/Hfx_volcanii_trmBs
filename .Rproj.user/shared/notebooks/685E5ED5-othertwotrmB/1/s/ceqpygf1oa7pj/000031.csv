@@ -1,0 +1,8 @@
+"0",""
+"0","# Plot PCA by column variable"
+"0","# plotPCA(vsd, intgroup = ""genotype"", ntop = 500) +"
+"0","#   theme_bw() + # remove default ggplot2 theme"
+"0","#   geom_point(size = 5) + # Increase point size"
+"0","#   # scale_y_continuous(limits = c(-5, 5)) + # change limits to fix figure dimensions"
+"0","#   ggtitle(label = ""Principal Component Analysis (PCA)"", "
+"0","#           subtitle = ""Top 500 most variable genes"") "

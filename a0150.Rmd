@@ -1,0 +1,29 @@
+```{r, message=F}
+library(tidyverse)
+library(purrr)
+library(ggpubr)
+library(viridis)
+library(pheatmap)
+library(rrcov)
+library(DESeq2)
+library(RColorBrewer)
+```
+
+```{r}
+trmB1 <- read.csv("a0150_trmB_counts_1.csv", sep = "", col.names = c("gene", "KO_a0150_1"), header = FALSE)
+trmB2 <- read.csv("a0150_trmB_counts_2.csv", sep = "", col.names = c("gene", "KO_a0150_2"), header = FALSE)
+trmB3 <- read.csv("a0150_trmB_counts_3.csv", sep = "", col.names = c("gene", "KO_a0150_3"), header = FALSE)
+WT1 <- read.csv("pyrE2_counts_.csv", sep = "", col.names = c("gene", "pyrE2_1"), header = FALSE)
+WT2 <- read.csv("pyrE2_counts_2.csv", sep = "", col.names = c("gene", "pyrE2_2"), header = FALSE)
+WT3 <- read.csv("pyrE2_counts_3.csv", sep = "", col.names = c("gene", "pyrE2_3"), header = FALSE)
+
+
+df_list <- list(WT1, WT2, WT3, trmB1, trmB2, trmB3)
+df <- df_list |> purrr::reduce(full_join, by="gene")
+counts_data <- head(df,-5)
+counts_mtx <- as.matrix(counts_data[-1])
+rownames(counts_mtx) <- counts_data$gene
+
+counts_col <- data.frame(colnames(counts_data)[-c(1)], c("WT", "WT", "WT", "a0150", "a0150", "a0150"))
+colnames(counts_col) <- c("rownames", "genotype")
+```

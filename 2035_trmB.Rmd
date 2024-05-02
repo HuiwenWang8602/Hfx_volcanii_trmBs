@@ -1,0 +1,190 @@
+```{r, message=F}
+library(tidyverse)
+library(purrr)
+library(ggpubr)
+library(viridis)
+library(pheatmap)
+library(rrcov)
+library(DESeq2)
+library(RColorBrewer)
+```
+
+```{r}
+trmB1 <- read.csv("2035_trmB_counts_1.csv", sep = "", col.names = c("gene", "KO_2035_1"), header = FALSE)
+trmB2 <- read.csv("2035_trmB_counts_2.csv", sep = "", col.names = c("gene", "KO_2035_2"), header = FALSE)
+trmB3 <- read.csv("2035_trmB_counts_3.csv", sep = "", col.names = c("gene", "KO_2035_3"), header = FALSE)
+WT1 <- read.csv("pyrE2_1.csv", sep = "", col.names = c("gene", "pyrE2_1"), header = FALSE)
+WT2 <- read.csv("pyrE2_2.csv", sep = "", col.names = c("gene", "pyrE2_2"), header = FALSE)
+WT3 <- read.csv("pyrE2_3.csv", sep = "", col.names = c("gene", "pyrE2_3"), header = FALSE)
+arcogs <- read.csv("arcogs-14-18.hvo.txt", sep = "")
+
+df_list <- list(WT1, WT2, WT3, trmB1, trmB2, trmB3)
+df <- df_list |> purrr::reduce(full_join, by="gene")
+counts_data <- head(df,-5)
+cts <- as.matrix(counts_data[-1])
+rownames(cts) <- counts_data$gene
+
+counts_col <- data.frame(factor(c("WT", "WT", "WT", "2035_trmB", "2035_trmB", "2035_trmB")))
+colnames(counts_col) <- c("genotype")
+rownames(counts_col) <- colnames(counts_data)[-c(1)]
+
+all(rownames(counts_col) == colnames(cts))
+```
+# Differential Expression
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = counts_col,
+                              design = ~ genotype)
+dds
+
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+# Pre-filtering low count genes
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+dds <- dds[keep,]
+
+# size factors
+dds <- estimateSizeFactors(dds)
+
+mydf <- sizeFactors(dds) %>%
+  as.data.frame() %>%
+  rownames_to_column()
+colnames(mydf)[2] <- "sizefac"
+ggplot(mydf, aes(rowname, sizefac)) +
+  geom_point()
+
+ddsDE <- DESeq(dds)
+
+# Total number of raw counts per sample
+colSums(counts(ddsDE)) %>%
+  as.data.frame() %>%
+  rownames_to_column() -> mydf.raw.count
+colnames(mydf.raw.count)[2] <- "whole.gene.count"
+
+# Normalizing counts by size factor
+colSums(counts(ddsDE, normalized = T)) %>%
+  as.data.frame() %>%
+  rownames_to_column() -> mydf.norm.count
+colnames(mydf.norm.count)[2] <- "whole.gene.norm.count"
+
+ggplot(mydf.norm.count, aes(rowname, whole.gene.norm.count)) +
+  geom_point()
+```
+# Differential Expression Analysis
+```{r}
+res <- results(ddsDE, contrast=list("genotype_2035_trmB_vs_WT"), 
+               alpha=0.01, lfcThreshold = 0.5)
+# res
+
+#order by adjusted p-values
+# resOrdered <- res[order(res$pvalue),]
+# sum(res$padj < 0.05, na.rm=TRUE)
+
+# How many adjusted p-values less than 0.01?
+sum(res$padj < 0.01, na.rm=TRUE)
+
+
+# resultsNames(ddsDE)
+resLFC <- lfcShrink(ddsDE, coef="genotype_2035_trmB_vs_WT", type="apeglm", lfcThreshold = 0.5)
+# resLFC
+
+
+drawLines <- function() abline(h=c(-.5,.5),col="dodgerblue",lwd=2)
+
+plotMA(res, ylim=c(-2.5,2.5)); drawLines()
+plotMA(resLFC, ylim=c(-2.5,2.5)); drawLines();
+
+# idx <- identify(resLFC$baseMean, resLFC$log2FoldChange)
+# rownames(resLFC)[idx]
+```
+
+# plot counts
+```{r}
+d <- plotCounts(dds, gene=which.min(res$padj), intgroup="genotype", 
+                returnData=TRUE)
+
+ggplot(d, aes(x=genotype, y=count)) + 
+  geom_point(position=position_jitter(w=0.1,h=0)) + 
+  scale_y_log10(breaks=c(25,100,400))
+```
+
+# count data
+```{r}
+vsd <- vst(ddsDE, blind=FALSE)
+rld <- rlog(ddsDE, blind=FALSE)
+head(assay(vsd), 3)
+
+ntd <- normTransform(ddsDE)
+library("vsn")
+meanSdPlot(assay(ntd))
+meanSdPlot(assay(vsd))
+meanSdPlot(assay(rld))
+```
+
+```{r}
+# plotPCA(vsd, intgroup=c("genotype"))
+
+pcaData <- plotPCA(vsd, intgroup=c("genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  coord_fixed()
+```
+
+```{r}
+plot(metadata(res)$filterNumRej, 
+     type="b", ylab="number of rejections",
+     xlab="quantiles of filter")
+lines(metadata(res)$lo.fit, col="red")
+abline(v=metadata(res)$filterTheta)
+```
+
+```{r}
+res_tbl <- res %>% # Make a result table
+  data.frame() %>%
+  rownames_to_column(var = "locus_tag") %>%
+  as_tibble()
+
+res_tbl_sig <- res_tbl %>% 
+  filter(padj<0.01)  %>%
+  filter(abs(log2FoldChange) >= 1)
+  # write_csv("sigresults.csv")
+
+# Volcano plot:
+res_tbl <- res_tbl %>%
+  mutate(threshold_sig = padj < 0.01)
+
+ggplot(res_tbl) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold_sig)) +
+  ggtitle("Interaction of TrmB and glucose") +
+  xlab("log2 fold change") +
+  ylab("-log10 adjusted p-value") +
+  ylim(0, 50) + 
+  xlim(-5,5)
+
+# ggplot(res_tbl_sig) +
+#   geom_point(aes(x = log2FoldChange, y = -log10(padj)) +
+#   ggtitle("Interaction of TrmB and glucose") +
+#   xlab("log2 fold change") +
+#   ylab("-log10 adjusted p-value")
+
+
+filter(res_tbl_sig, log2FoldChange >= 1)
+filter(res_tbl_sig, log2FoldChange <= -1)
+```
+
+```{r}
+vsd <- vst(ddsDE)
+
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+colnames(sampleDistMatrix) <- paste(vsd$genotype, sep = "-")
+colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
+
+# Heatmap
+pheatmap(sampleDistMatrix, clustering_distance_rows = sampleDists, clustering_distance_cols = sampleDists, col = colors)
+
+```

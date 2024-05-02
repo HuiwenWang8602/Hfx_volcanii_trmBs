@@ -1,0 +1,2 @@
+"0",""
+"0","filter(res_tabl, log2FoldChange >= 1)"

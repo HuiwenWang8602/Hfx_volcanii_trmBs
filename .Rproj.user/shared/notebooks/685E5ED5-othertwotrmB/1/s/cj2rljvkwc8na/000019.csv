@@ -1,0 +1,6 @@
+"0","d <- plotCounts(dds, gene=which.min(res_0568$padj), intgroup=""genotype"", "
+"0","                returnData=TRUE)"
+"0",""
+"0","ggplot(d, aes(x=genotype, y=count)) + "
+"0","  geom_point(position=position_jitter(w=0.1,h=0)) + "
+"0","  scale_y_log10(breaks=c(25,100,400))"

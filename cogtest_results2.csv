@@ -1,0 +1,9 @@
+"","strain","COG","probability","expect","count","p_adjust"
+"1","hvo_1272","Lipid transport and metabolism",0.002754,1.48026315789474,5,0.01377
+"2","hvo_1272","Mobilome: prophages, transposons",1.496e-06,5.56578947368421,18,1.496e-05
+"3","hvo_1272","Signal transduction mechanisms",5.223e-10,3.55263157894737,18,1.045e-08
+"4","hvo_1272","Transcription",0.001499,7.04605263157895,15,0.009995
+"5","hvo_0568","Lipid transport and metabolism",0.0001031,1.17105263157895,6,0.0006877
+"6","hvo_0568","Mobilome: prophages, transposons",0.001266,4.40315789473684,11,0.006329
+"7","hvo_0568","Signal transduction mechanisms",5.337e-08,2.81052631578947,14,1.067e-06
+"8","hvo_0568","Transcription",1.73e-06,5.57421052631579,18,1.73e-05

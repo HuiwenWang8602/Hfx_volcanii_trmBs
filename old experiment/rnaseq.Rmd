@@ -1,0 +1,327 @@
+```{r, message=F}
+library(tidyverse)
+library(purrr)
+library(ggpubr)
+library(viridis)
+library(pheatmap)
+library(rrcov)
+library(DESeq2)
+library(RColorBrewer)
+library(GenomicFeatures)
+library(GenomicRanges)
+library(rtracklayer)
+```
+
+# Reading in CSV files and creating count matrix and metadata
+```{r} 
+arcogs <- read.csv("arcogs-14-18.hvo.txt", sep = "")
+
+counts_data <- read_csv("00_combined_data_out.csv")
+counts_col <- read_csv("00_combined_meta_out.csv")
+
+counts_col <- counts_col |>
+  filter(
+    (genotype == "trmB" | genotype == "WT")  &
+    glucose == "pGlu" &
+    batch == "RH_S1_2021"
+  )
+
+rownames = counts_col$rowname
+counts_col <- counts_col[c(3)]
+rownames(counts_col) <- rownames
+
+cts <- subset(counts_data, select = c(trmB_a_glu_S4, trmB_c_glu_S34, WT_a_glu_S39, WT_c_glu_S18, WT_d_glu_S19))
+cts <- as.matrix(cts)
+rownames(cts) <- counts_data$...1
+
+
+# colnames(counts_col) <- c("genotype")
+# row.names(counts_col) <- colnames(counts_data)[-c(1)]
+
+all(rownames(counts_col) == colnames(cts))
+```
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = counts_col,
+                              design = ~ genotype)
+
+# Pre-filtering low count genes
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+dds <- dds[keep,]
+
+# Assigning baseline genotype (WT)
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+dds <- estimateSizeFactors(dds)
+
+ddsDE <- DESeq(dds)
+resultsNames(ddsDE)
+
+res <- results(ddsDE, contrast = list("genotype_trmB_vs_WT"),
+                     lfcThreshold = 1, alpha = 0.01)
+
+```
+# MA Plot
+```{r}
+# resLFC <- lfcShrink(ddsDE, coef="genotype_trmB_vs_WT", type="apeglm", lfcThreshold = 1)
+# 
+# 
+# drawLines <- function() abline(h=c(-1,1),col="dodgerblue",lwd=2)
+# 
+# # plotMA(res, ylim=c(-2.5,2.5)); drawLines()
+# plotMA(resLFC_2035, ylim=c(-2.5,2.5)); drawLines();
+# plotMA(resLFC_a0150, ylim=c(-2.5,2.5)); drawLines();
+```
+
+
+# Plot Counts
+```{r}
+d <- plotCounts(dds, gene=which.min(res$padj), intgroup="genotype", 
+                returnData=TRUE)
+
+ggplot(d, aes(x=genotype, y=count)) + 
+  geom_point(position=position_jitter(w=0.1,h=0)) + 
+  scale_y_log10(breaks=c(25,100,400))
+```
+
+# Transformations
+```{r}
+vsd <- vst(ddsDE, blind=FALSE)
+# rld <- rlog(ddsDE, blind=FALSE)
+# ntd <- normTransform(ddsDE)
+
+library("vsn")
+
+# meanSdPlot(assay(ntd))
+meanSdPlot(assay(vsd))
+# meanSdPlot(assay(rld))
+```
+
+# PCA
+```{r}
+# PCA with variance stabilizing transformation
+plotPCA(vsd, intgroup = c("genotype"))
+
+# Plot PCA by column variable
+plotPCA(vsd, intgroup = "genotype", ntop = 500) +
+  theme_bw() + # remove default ggplot2 theme
+  geom_point(size = 5) + # Increase point size
+  # scale_y_continuous(limits = c(-5, 5)) + # change limits to fix figure dimensions
+  ggtitle(label = "Principal Component Analysis (PCA)", 
+          subtitle = "Top 500 most variable genes") 
+```
+
+# Heatmap of sample-to-sample distance
+```{r}
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+colnames(sampleDistMatrix) <- paste(vsd$genotype, sep = "-")
+colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
+
+# Heatmap
+pheatmap(sampleDistMatrix, clustering_distance_rows = sampleDists, clustering_distance_cols = sampleDists, col = colors)
+```
+
+# Tables
+```{r}
+# res_2035 <- results(ddsDE, name = "genotype_2035_trmB_vs_WT",
+#                      cooksCutoff = FALSE, independentFiltering = FALSE,
+#                      lfcThreshold = 1, alpha = 0.01)
+
+res_tabl <- res %>% # Make a result table
+  data.frame() %>%
+  rownames_to_column(var = "locus_tag") %>%
+  as_tibble()
+
+tmp <- arcogs[c(1, 11, 12, 18)]
+
+res_tabl <- left_join(res_tabl, tmp, by="locus_tag")
+
+res_sig <- res_tabl %>%
+  filter(padj < 0.01) %>%
+  filter(abs(log2FoldChange) >= 1)
+
+# write_csv(table_a0150, "data/a0150.csv")
+
+```
+
+# How many differentially expressed genes are there?
+```{r}
+sum(res$padj < 0.01, na.rm=TRUE)
+```
+
+# Volcano plot -- 2035_trmB
+```{r}
+res_tabl <- res_tabl %>%
+  mutate(threshold_sig = padj < 0.01)
+
+ggplot(res_tabl) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold_sig)) +
+  ggtitle("Differentially expressed genes between trmB and pyrE2") +
+  theme_bw() + 
+  xlab("log2 fold change") +
+  ylab("-log10 adjusted p-value") +
+  ylim(0, 50) + 
+  xlim(-5,5) + 
+  guides(color = guide_legend(title = "Is this significant?"))
+
+filter(res_tabl, log2FoldChange >= 1)
+filter(res_tabl, log2FoldChange <= -1)
+```
+
+# Cog-test
+```{r}
+# Calculate statistical information about the cogs represented in the list of genes using the function below.
+# Cogtest: three inputs to this function:
+# 1) list of gene names from the cluster (namelist)
+# 2) COG file
+# 3) p-value cutoff
+# 4) method for multiple testing correction
+cogtest <- function(namelist, cogfile, pvalue, method = "fdr", cutoff = 5) {
+  cogs <- subset(cogfile, is.element(cogfile$locus_tag, unique(namelist$locus_tag)) == TRUE)
+  clust <- table(cogs$funclass_name)
+  resm <- matrix(0, length(clust), 4) # create 0 matrix
+  res <- data.frame(resm) # make 0 df
+  rownames(res) <- names(clust)
+  colnames(res) <- c("probability", "expect", "count", "p_adjust")
+  all <- table(cogfile$funclass_name)
+  for (i in 1:length(clust)) { # calc expected frequencies and pval by hypergeo and append to DF
+    res[i, 1] <- phyper(clust[i], all[i], sum(all) - all[i], nrow(cogs), lower.tail = F)
+    res[i, 2] <- all[i] * (nrow(cogs) / sum(all))
+    res[i, 3] <- clust[i]
+  }
+  # multiple testing correction:
+  res$p_adjust <- signif(p.adjust(res$probability, method = method), digits = 4)
+  res$probability <- signif(res$probability, digits = 4)
+
+  fin <- subset(res, p_adjust <= pvalue & count >= cutoff)
+  # fin <- subset(res) # put this on if want to see all
+  fin <- cbind("COG" = rownames(fin), fin, stringsAsFactors = F)
+  row.names(fin) <- NULL
+  return(fin)
+}
+
+cogtest(res_sig, arcogs, 0.05, cutoff = 5)
+```
+
+# Heatmap
+```{r}
+topVarGenes <- head(order(rowVars(assay(vsd)), decreasing = TRUE), 30)
+
+mat <- assay(vsd)[ topVarGenes, ] 
+mat <- mat - rowMeans(mat) 
+anno <- as.data.frame(mat)
+anno$locus_tag <- rownames(anno)
+
+anno <- left_join(anno, arcogs[c(1, 11)], by = "locus_tag")
+
+anno <- anno %>%
+  mutate(name = ifelse(Gene == "-" | is.na(Gene), locus_tag, Gene))
+anno$name <- sub('[.]', '_', make.names(anno$name, unique=TRUE))
+
+rownames(anno) <- anno$name
+anno <- anno[-c(10,11,12)]
+mat <- as.matrix(anno)
+
+pheatmap(mat, cluster_rows = T, cluster_columns = F, column_labels = colnames(anno))
+```
+
+
+
+# Heatmap 2035
+```{r}
+# varGenes2035 <- table_2035_sig$locus_tag
+# mat <- assay(vsd)[ varGenes2035, ] 
+# mat <- mat - rowMeans(mat) 
+# anno <- as.data.frame(mat)
+# anno$locus_tag <- rownames(anno)
+# 
+# anno <- left_join(anno, arcogs[c(1, 11)], by = "locus_tag")
+# 
+# anno <- anno %>%
+#   mutate(name = ifelse(Gene == "-" | is.na(Gene), locus_tag, Gene))
+# anno$name <- sub('[.]', '_', make.names(anno$name, unique=TRUE))
+# 
+# rownames(anno) <- anno$name
+# anno <- anno[-c(10,11,12)]
+# mat <- as.matrix(anno)
+# 
+# pheatmap(mat, cluster_rows = T, cluster_columns = F, column_labels = colnames(anno))
+```
+
+```{r}
+library(clusterProfiler)
+
+# data(table_a0150_sig$locus_tag)
+gene_list <- 
+head(table_a0150_sig)
+# library(org.Mm.eg.db)
+# 
+# search_kegg_organism('hvo', by='kegg_code')
+# 
+# table_2035_sig$entrez <- mapIds(x = org.Mm.eg.db,
+#                          keys = row.names(results),
+#                          column = "ENTREZID",
+#                          keytype = "SYMBOL",
+#                          multiVals = "first")
+# 
+# 
+# gene_matrix <- table_a0150_sig$log2FoldChange
+# names(gene_matrix) <- 
+# head(gene_matrix)
+
+```
+
+# ClusterProfiler
+```{r}
+# Write normalized gene counts to a .txt file
+write.table(x = as.data.frame(counts(ddsDE), normalized = T), 
+            file = 'data/normalized_counts.csv', 
+            sep = '\t', 
+            quote = F,
+            col.names = NA)
+
+# significant results 
+write.table(x = counts(ddsDE[table_2035_sig$locus_tag], normalized = T), 
+            file = 'data/normalized_counts_significant_2035.csv', 
+            sep = '\t', 
+            quote = F, 
+            col.names = NA)
+
+write.table(x = counts(ddsDE[table_a0150_sig$locus_tag], normalized = T), 
+            file = 'data/normalized_counts_significant_a0150.csv', 
+            sep = '\t', 
+            quote = F, 
+            col.names = NA)
+
+# Write significant annotated results table to a .txt file
+write.table(x = as.data.frame(res_2035), 
+            file = "data/results_gene_annotated_significant.csv", 
+            sep = '\t', 
+            quote = F,
+            col.names = NA)
+
+# # Write the annotated results table to a .txt file
+# write.table(x = as.data.frame(results), 
+#             file = "data/results_gene_annotated.txt", 
+#             sep = '\t', 
+#             quote = F,
+#             col.names = NA)
+# 
+# # Write significant annotated results table to a .txt file
+# write.table(x = as.data.frame(results_sig), 
+#             file = "data.results_gene_annotated_significant.txt", 
+#             sep = '\t', 
+#             quote = F,
+#             col.names = NA)
+```
+
+
+```{r}
+all_sig <- unique(inner_join(table_2035_sig, table_a0150_sig, by = "locus_tag")) %>%
+  mutate(
+    avgLFC = (log2FoldChange.x + log2FoldChange.y)/2
+  )
+```

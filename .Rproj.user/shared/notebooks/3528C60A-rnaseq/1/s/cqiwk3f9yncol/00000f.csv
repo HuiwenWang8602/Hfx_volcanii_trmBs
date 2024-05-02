@@ -1,0 +1,8 @@
+"0","# resLFC <- lfcShrink(ddsDE, coef=""genotype_trmB_vs_WT"", type=""apeglm"", lfcThreshold = 1)"
+"0","# "
+"0","# "
+"0","# drawLines <- function() abline(h=c(-1,1),col=""dodgerblue"",lwd=2)"
+"0","# "
+"0","# # plotMA(res, ylim=c(-2.5,2.5)); drawLines()"
+"0","# plotMA(resLFC_2035, ylim=c(-2.5,2.5)); drawLines();"
+"0","# plotMA(resLFC_a0150, ylim=c(-2.5,2.5)); drawLines();"

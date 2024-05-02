@@ -1,0 +1,3 @@
+"0","plotMA(resLFC_0568, ylim=c(-2.5,2.5)); drawLines();"
+"2","thresholding s-values on alpha=0.005 to color points
+"

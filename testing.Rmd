@@ -1,0 +1,89 @@
+```{r, message=F}
+library(tidyverse)
+library(purrr)
+library(ggpubr)
+library(viridis)
+library(pheatmap)
+library(rrcov)
+library(DESeq2)
+library(RColorBrewer)
+library(GenomicFeatures)
+library(GenomicRanges)
+library(rtracklayer)
+```
+
+```{r}
+trmB1 <- read.csv("2035_trmB_counts_1.csv", sep = "", col.names = c("gene", "KO_2035_1"), header = FALSE)
+trmB2 <- read.csv("2035_trmB_counts_2.csv", sep = "", col.names = c("gene", "KO_2035_2"), header = FALSE)
+trmB3 <- read.csv("2035_trmB_counts_3.csv", sep = "", col.names = c("gene", "KO_2035_3"), header = FALSE)
+trmB4 <- read.csv("a0150_trmB_counts_1.csv", sep = "", col.names = c("gene", "a0150_1"), header = FALSE)
+trmB5 <- read.csv("a0150_trmB_counts_2.csv", sep = "", col.names = c("gene", "a0150_2"), header = FALSE)
+trmB6 <- read.csv("a0150_trmB_counts_3.csv", sep = "", col.names = c("gene", "a0150_3"), header = FALSE)
+WT1 <- read.csv("pyrE2_1.csv", sep = "", col.names = c("gene", "pyrE2_1"), header = FALSE)
+WT2 <- read.csv("pyrE2_2.csv", sep = "", col.names = c("gene", "pyrE2_2"), header = FALSE)
+WT3 <- read.csv("pyrE2_3.csv", sep = "", col.names = c("gene", "pyrE2_3"), header = FALSE)
+
+arcogs <- read.csv("arcogs-14-18.hvo.txt", sep = "")
+
+df_list <- list(WT1, WT2, WT3, trmB1, trmB2, trmB3, trmB4, trmB5, trmB6)
+df <- df_list |> purrr::reduce(full_join, by="gene")
+counts_data <- head(df,-5)
+cts <- as.matrix(counts_data[-1])
+rownames(cts) <- counts_data$gene
+
+counts_col <- data.frame(factor(c("WT", "WT", "WT", "2035_trmB", "2035_trmB", "2035_trmB", "a0150_trmB", "a0150_trmB", "a0150_trmB")))
+colnames(counts_col) <- c("genotype")
+counts_col$strain <- colnames(counts_data)[-c(1)]
+# rownames(counts_col) <- colnames(counts_data)[-c(1)]
+
+all(rownames(counts_col) == colnames(cts))
+```
+
+```{r}
+dds <- DESeqDataSetFromMatrix(cts, counts_col, ~genotype)
+
+# remove low counts
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+
+#main DESeq
+ddsDE <- DESeq(dds)
+
+#report norm counts
+normCounts <- counts(ddsDE, normalized = T)
+write.csv(normCounts, "normal_counts.csv")
+
+res <- results(ddsDE, alpha = 0.01)
+resOrdered <- res[order(res$padj),]
+write.csv(resOrdered, "ordered_results.csv")
+
+# summary(res)
+```
+
+```{r}
+plotMA(res, ylim=c(-2.5,2.5))
+
+normCount <- read.csv("normal_counts.csv", row.names = 1)
+deSeqRes <- read.csv("ordered_results.csv", row.names = 1)
+
+deSeqRes$sig <- ifelse(deSeqRes$padj <= 0.05, "yes", "no")
+
+deSeqRes <- na.omit(deSeqRes)
+
+# plotMA
+ggplot(deSeqRes, aes(x = log10(baseMean), y = log2FoldChange, color = sig)) +
+  geom_point()
+
+# volcano plot
+ggplot(deSeqRes, aes(x = log2FoldChange, y = -log10(padj), color = sig)) +
+  geom_point()
+
+# pheatmap
+sigi <- subset(deSeqRes, padj <= 0.01)
+allSig <- merge(normCount, sigi, by = 0)
+
+sigCounts <- allSig[,2:7]
+row.names(sigCounts) <- allSig$Row.names
+
+pheatmap(log2(sigCounts + 1) ,scale = "row")
+```

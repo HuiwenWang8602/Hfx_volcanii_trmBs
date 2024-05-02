@@ -1,0 +1,4 @@
+"0","resLFC <- lfcShrink(ddsDE, coef=""genotype_2035_trmB_vs_WT"", type=""apeglm"", lfcThreshold = 1)"
+"2","Error in lfcShrink(ddsDE, coef = ""genotype_2035_trmB_vs_WT"", type = ""apeglm"",  : 
+  coef %in% resultsNamesDDS is not TRUE
+"

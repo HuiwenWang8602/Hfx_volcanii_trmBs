@@ -1,0 +1,12 @@
+"0","pcaData <- plotPCA(vsd, intgroup=c(""genotype""), returnData=TRUE)"
+"2","using ntop=500 top features by variance
+"
+"0","percentVar <- round(100 * attr(pcaData, ""percentVar""))"
+"0","ggplot(pcaData, aes(PC1, PC2, color=genotype)) +"
+"0","  geom_point(size=3) +"
+"0","  theme_bw() + "
+"0","  ggtitle(label = ""Principal Component Analaysis (PCA)"","
+"0","          subtitle = ""pyrE2, trmB2, and trmB3"") +"
+"0","  xlab(paste0(""PC1: "",percentVar[1],""% variance"")) +"
+"0","  ylab(paste0(""PC2: "",percentVar[2],""% variance"")) + "
+"0","  coord_fixed()"

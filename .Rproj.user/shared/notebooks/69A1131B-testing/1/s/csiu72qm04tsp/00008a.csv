@@ -1,0 +1,4 @@
+"0",""
+"0","# volcano plot"
+"0","ggplot(deSeqRes, aes(x = log2FoldChange, y = -log10(padj), color = sig)) +"
+"0","  geom_point()"

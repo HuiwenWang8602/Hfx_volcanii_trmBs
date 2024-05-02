@@ -1,0 +1,22 @@
+"0","resLFC_1272 <- lfcShrink(ddsDE, coef=""genotype_trmB3_vs_WT"", type=""apeglm"", lfcThreshold = 1)"
+"2","using 'apeglm' for LFC shrinkage. If used in published research, please cite:
+    Zhu, A., Ibrahim, J.G., Love, M.I. (2018) Heavy-tailed prior distributions for
+    sequence count data: removing the noise and preserving large differences.
+    Bioinformatics. https://doi.org/10.1093/bioinformatics/bty895
+"
+"2","computing FSOS 'false sign or small' s-values (T=1)
+"
+"0","resLFC_0568 <- lfcShrink(ddsDE, coef=""genotype_trmB2_vs_WT"", type=""apeglm"", lfcThreshold = 1)"
+"2","using 'apeglm' for LFC shrinkage. If used in published research, please cite:
+    Zhu, A., Ibrahim, J.G., Love, M.I. (2018) Heavy-tailed prior distributions for
+    sequence count data: removing the noise and preserving large differences.
+    Bioinformatics. https://doi.org/10.1093/bioinformatics/bty895
+"
+"2","computing FSOS 'false sign or small' s-values (T=1)
+"
+"0","drawLines <- function() abline(h=c(-1,1),col=""dodgerblue"",lwd=2)"
+"0",""
+"0","# plotMA(res, ylim=c(-2.5,2.5)); drawLines()"
+"0","plotMA(resLFC_1272, ylim=c(-2.5,2.5)); drawLines();"
+"2","thresholding s-values on alpha=0.005 to color points
+"

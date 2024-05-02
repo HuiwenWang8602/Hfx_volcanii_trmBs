@@ -1,0 +1,38 @@
+"0","dds <- DESeqDataSetFromMatrix(countData = cts,"
+"0","                              colData = counts_col,"
+"0","                              design = ~ genotype)"
+"2","converting counts to integer mode
+"
+"2","Warning: some variables in design formula are characters, converting to factors"
+"0","# Pre-filtering low count genes"
+"0","smallestGroupSize <- 3"
+"0","keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize"
+"0","dds <- dds[keep,]"
+"0",""
+"0","# Assigning baseline genotype (WT)"
+"0","dds$genotype <- relevel(dds$genotype, ref = ""WT"")"
+"0",""
+"0","dds <- estimateSizeFactors(dds)"
+"0",""
+"0","ddsDE <- DESeq(dds)"
+"2","using pre-existing size factors
+"
+"2","estimating dispersions
+"
+"2","gene-wise dispersion estimates
+"
+"2","mean-dispersion relationship
+"
+"2","final dispersion estimates
+"
+"2","fitting model and testing
+"
+"0","resultsNames(ddsDE)"
+"1","[1]"
+"1"," ""Intercept""          "
+"1"," ""genotype_trmB_vs_WT"""
+"1","
+"
+"0","res <- results(ddsDE, contrast = list(""genotype_trmB_vs_WT""),"
+"0","                     lfcThreshold = 1, alpha = 0.01)"
+"0",""

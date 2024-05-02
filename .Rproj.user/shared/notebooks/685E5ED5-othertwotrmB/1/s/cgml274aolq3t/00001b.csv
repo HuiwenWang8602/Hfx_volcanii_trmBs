@@ -1,0 +1,7 @@
+"0","sampleDists <- dist(t(assay(vsd)))"
+"0","sampleDistMatrix <- as.matrix(sampleDists)"
+"0","colnames(sampleDistMatrix) <- paste(vsd$genotype, sep = ""-"")"
+"0","colors <- colorRampPalette(rev(brewer.pal(9, ""Blues"")))(255)"
+"0",""
+"0","# Heatmap"
+"0","pheatmap(sampleDistMatrix, clustering_distance_rows = sampleDists, clustering_distance_cols = sampleDists, col = colors, main = ""Heatmap of sample-to-sample distances (pyrE2, trmB2, trmB3)"")"

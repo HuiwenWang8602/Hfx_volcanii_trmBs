@@ -1,0 +1,4 @@
+"0","# PCA with variance stabilizing transformation"
+"0","plotPCA(vsd, intgroup = c(""genotype""))"
+"2","using ntop=500 top features by variance
+"

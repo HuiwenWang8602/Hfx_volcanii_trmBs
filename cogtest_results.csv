@@ -1,0 +1,7 @@
+"","strain","COG","probability","expect","count","p_adjust"
+"1","hvo_2035","Amino acid transport and metabolism",0.007471,6.91578947368421,13,0.04233
+"2","hvo_2035","Energy production and conversion",0.01343,1.97868421052632,5,0.04568
+"3","hvo_2035","Function unknown",6.52e-10,3.95736842105263,19,1.108e-08
+"4","hvo_a0150","Cell motility",5.064e-22,3.96078947368421,31,1.013e-20
+"5","hvo_a0150","Signal transduction mechanisms",0.001354,2.73157894736842,8,0.009029
+"6","hvo_a0150","Transcription",0.000265,5.41763157894737,14,0.00265

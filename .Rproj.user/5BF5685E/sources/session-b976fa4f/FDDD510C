@@ -1,0 +1,28 @@
+{
+    "id": "FDDD510C",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1714435629375.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "id": "3121a310d8c24267a8305686885528a0",
+        "name": "res_a0150",
+        "title": "res_a0150",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 7863333819596693600,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1714435629375,
+    "read_only": false,
+    "read_only_alternatives": []
+}

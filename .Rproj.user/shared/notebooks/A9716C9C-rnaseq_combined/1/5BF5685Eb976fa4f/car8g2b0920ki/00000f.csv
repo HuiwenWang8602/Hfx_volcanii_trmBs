@@ -1,0 +1,59 @@
+"0","library(clusterProfiler)"
+"2","
+"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","clusterProfiler v4.10.0  For help: https://yulab-smu.top/biomedical-knowledge-mining-book/
+
+If you use clusterProfiler in published research, please cite:
+T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan, X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal enrichment tool for interpreting omics data. The Innovation. 2021, 2(3):100141
+"
+"2","
+Attaching package: ‘clusterProfiler’
+
+"
+"2","The following object is masked from ‘package:AnnotationDbi’:
+
+    select
+
+"
+"2","The following object is masked from ‘package:IRanges’:
+
+    slice
+
+"
+"2","The following object is masked from ‘package:S4Vectors’:
+
+    rename
+
+"
+"2","The following object is masked from ‘package:purrr’:
+
+    simplify
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    filter
+
+"
+"0","# data(table_a0150_sig$locus_tag)"
+"0","gene_list <- "
+"0","head(table_a0150_sig)"
+"0","# library(org.Mm.eg.db)"
+"0","# "
+"0","# search_kegg_organism('hvo', by='kegg_code')"
+"0","# "
+"0","# table_2035_sig$entrez <- mapIds(x = org.Mm.eg.db,"
+"0","#                          keys = row.names(results),"
+"0","#                          column = ""ENTREZID"","
+"0","#                          keytype = ""SYMBOL"","
+"0","#                          multiVals = ""first"")"
+"0","# "
+"0","# "
+"0","# gene_matrix <- table_a0150_sig$log2FoldChange"
+"0","# names(gene_matrix) <- "
+"0","# head(gene_matrix)"
+"0",""

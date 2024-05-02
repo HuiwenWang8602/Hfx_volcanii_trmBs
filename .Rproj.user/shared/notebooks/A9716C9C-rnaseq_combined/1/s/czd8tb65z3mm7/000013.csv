@@ -1,0 +1,8 @@
+"0",""
+"0","overlap <- inner_join(table_2035_sig[1], table_a0150_sig[1], by = ""locus_tag"")"
+"2","Warning: Detected an unexpected many-to-many relationship between `x` and `y`."
+"0","overlap <- unique(overlap)"
+"0",""
+"0","tmp <- arcogs[c(1,18)]"
+"0","overlap <- inner_join(overlap, tmp, by=""locus_tag"")"
+"0","overlap"

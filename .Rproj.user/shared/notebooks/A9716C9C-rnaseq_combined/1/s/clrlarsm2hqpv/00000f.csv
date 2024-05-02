@@ -1,0 +1,10 @@
+"0","# res_2035 <- results(ddsDE, name = ""genotype_2035_trmB_vs_WT"","
+"0","#                      cooksCutoff = FALSE, independentFiltering = FALSE,"
+"0","#                      lfcThreshold = 1, alpha = 0.01)"
+"0",""
+"0","table_a0150_LFC <- res_a0150_LFC %>% # Make a result table"
+"0","  data.frame() %>%"
+"0","  rownames_to_column(var = ""locus_tag"") %>%"
+"0","  as_tibble()"
+"2","Error: object 'res_a0150_LFC' not found
+"

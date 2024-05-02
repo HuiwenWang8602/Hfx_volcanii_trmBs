@@ -1,0 +1,8 @@
+"0","vsd <- vst(ddsDE, blind=FALSE)"
+"0","# rld <- rlog(ddsDE, blind=FALSE)"
+"0","# ntd <- normTransform(ddsDE)"
+"0",""
+"0","library(""vsn"")"
+"0",""
+"0","# meanSdPlot(assay(ntd))"
+"0","meanSdPlot(assay(vsd))"
